@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customised Lending Solution</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #0056b3;
+            font-size: 2.2em;
+        }
+        .input-section {
+            margin-bottom: 30px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 20px;
+            align-items: flex-end;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="number"], select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            height: 42px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        input:disabled, select:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+        button {
+            padding: 12px 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            height: 42px;
+        }
+        button#btn-generate { background-color: #007bff; }
+        button#btn-generate:hover { background-color: #0056b3; }
+        
+        button#btn-edit { background-color: #ffc107; color: #212529; }
+        button#btn-edit:hover { background-color: #e0a800; }
+
+        button#btn-reset { background-color: #6c757d; }
+        button#btn-reset:hover { background-color: #5a6268; }
+
+        .results-section {
+             margin-top: 30px;
+        }
+        .results-layout {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+        .schedule-wrapper {
+            flex: 3;
+            max-height: 65vh;
+            overflow-y: auto;
+            border: 1px solid #e9e9e9;
+            border-radius: 8px;
+        }
+        .summary-wrapper {
+            flex: 2;
+            position: sticky;
+            top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9e9e9;
+            vertical-align: middle;
+        }
+        thead th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        td.currency {
+            text-align: right;
+            font-family: monospace, sans-serif;
+            font-size: 1.1em;
+        }
+        .paid-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .paid-row { background-color: #f0f0f0; }
+        .paid-row td:not(:first-child) {
+            color: #888;
+            text-decoration: line-through;
+        }
+        .summary {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        .summary h3 { margin-top: 0; color: #333; }
+        .summary p {
+            margin: 8px 0;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+        }
+        .summary span { font-weight: bold; }
+        /* Style for different summary items */
+        #total-interest-paid { color: #28a745; }
+        #total-unpaid-interest { color: #dc3545; }
+        #total-simple-interest { color: #495057; }
+        #final-balance { color: #0056b3; }
+        
+        #error-message {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* --- RESPONSIVE DESIGN --- */
+        @media (max-width: 950px) {
+            .results-layout {
+                flex-direction: column;
+            }
+            .summary-wrapper {
+                position: static;
+                width: 100%;
+            }
+            .schedule-wrapper {
+                max-height: none;
+                overflow-y: visible;
+                width: 100%;
+            }
+            .container {
+                padding: 20px 15px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Customised Lending Solution</h1>
+
+        <div class="input-section">
+            <div id="calculator-form" class="form-grid">
+                <div class="input-group">
+                    <label for="principal">Principal Amount</label>
+                    <input type="number" id="principal" placeholder="e.g., 500000">
+                </div>
+                <div class="input-group">
+                    <label for="rate">Interest Rate (%/month)</label>
+                    <input type="number" id="rate" placeholder="e.g., 1.5">
+                </div>
+                <div class="input-group">
+                    <label for="months">Number of Months</label>
+                    <input type="number" id="months" placeholder="e.g., 60">
+                </div>
+                <div class="input-group">
+                    <label for="currency">Currency</label>
+                    <select id="currency">
+                        <option value="INR" selected>INR (₹)</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="JPY">JPY (¥)</option>
+                        <option value="AUD">AUD (A$)</option>
+                        <option value="CAD">CAD (C$)</option>
+                    </select>
+                </div>
+                <button id="btn-generate" onclick="generateSchedule()">Generate</button>
+                <button id="btn-edit" onclick="enableEditing()" style="display: none;">Edit Inputs</button>
+                <button id="btn-reset" onclick="resetCalculator()">Reset</button>
+            </div>
+            <div id="error-message"></div>
+        </div>
+
+        <div class="results-section" id="results-section" style="display: none;">
+            <div class="results-layout">
+                <div class="schedule-wrapper">
+                    <div id="schedule-table-container"></div>
+                </div>
+                <div class="summary-wrapper">
+                    <div class="summary" id="summary-section">
+                        <h3>Summary</h3>
+                        <p>Total Interest Paid: <span id="total-interest-paid">₹0.00</span></p>
+                        <p>Total Unpaid Interest: <span id="total-unpaid-interest">₹0.00</span></p>
+                        <hr style="border: none; border-top: 1px solid #ccc; margin: 10px 0;">
+                        <p>Final Outstanding Balance: <span id="final-balance">₹0.00</span></p>
+                        <p>Total Simple Interest: <span id="total-simple-interest">₹0.00</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- NO CHANGES NEEDED IN JAVASCRIPT ---
+        const principalInput = document.getElementById('principal');
+        const rateInput = document.getElementById('rate');
+        const monthsInput = document.getElementById('months');
+        const currencyInput = document.getElementById('currency');
+        const errorMessageDiv = document.getElementById('error-message');
+        const resultsSection = document.getElementById('results-section');
+        const scheduleContainer = document.getElementById('schedule-table-container');
+        const totalInterestPaidSpan = document.getElementById('total-interest-paid');
+        const totalUnpaidInterestSpan = document.getElementById('total-unpaid-interest');
+        const totalSimpleInterestSpan = document.getElementById('total-simple-interest');
+        const finalBalanceSpan = document.getElementById('final-balance');
+        const generateBtn = document.getElementById('btn-generate');
+        const editBtn = document.getElementById('btn-edit');
+        
+        function formatCurrency(num, currencyCode) {
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: currencyCode }).format(num);
+        }
+        
+        function enableEditing() {
+            principalInput.disabled = false;
+            rateInput.disabled = false;
+            monthsInput.disabled = false;
+            currencyInput.disabled = false;
+
+            editBtn.style.display = 'none';
+            generateBtn.style.display = 'inline-block';
+            generateBtn.textContent = 'Update Schedule';
+            
+            principalInput.focus();
+        }
+
+        function generateSchedule() {
+            const principal = parseFloat(principalInput.value);
+            const rate = parseFloat(rateInput.value);
+            const months = parseInt(monthsInput.value);
+
+            if (isNaN(principal) || principal <= 0 || isNaN(rate) || rate <= 0 || isNaN(months) || months <= 0) {
+                errorMessageDiv.textContent = "Please enter valid, positive numbers for all fields.";
+                errorMessageDiv.style.display = 'block';
+                return;
+            }
+            errorMessageDiv.style.display = 'none';
+
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Paid</th>
+                            <th>Month</th>
+                            <th class="currency">Opening Principal</th>
+                            <th class="currency">Interest for Month</th>
+                            <th class="currency">Closing Principal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-body">`;
+
+            for (let i = 1; i <= months; i++) {
+                tableHTML += `
+                    <tr id="row-${i}" data-month="${i}">
+                        <td><input type="checkbox" class="paid-checkbox" onchange="recalculateAndUpdateUI()"></td>
+                        <td>Month ${i}</td>
+                        <td class="currency" id="opening-principal-${i}"></td>
+                        <td class="currency" id="interest-${i}"></td>
+                        <td class="currency" id="closing-principal-${i}"></td>
+                    </tr>`;
+            }
+            tableHTML += `</tbody></table>`;
+            scheduleContainer.innerHTML = tableHTML;
+            
+            principalInput.disabled = true;
+            rateInput.disabled = true;
+            monthsInput.disabled = true;
+            currencyInput.disabled = true;
+            generateBtn.style.display = 'none';
+            editBtn.style.display = 'inline-block';
+            resultsSection.style.display = 'block';
+
+            recalculateAndUpdateUI();
+        }
+
+        function recalculateAndUpdateUI() {
+            const initialPrincipal = parseFloat(principalInput.value);
+            const rate = parseFloat(rateInput.value);
+            const months = parseInt(monthsInput.value);
+            const currency = currencyInput.value;
+            
+            let currentPrincipal = initialPrincipal;
+            let totalInterestPaid = 0;
+            let totalUnpaidInterest = 0;
+
+            const totalSimpleInterest = initialPrincipal * (rate / 100) * months;
+
+            for (let i = 1; i <= months; i++) {
+                const row = document.getElementById(`row-${i}`);
+                const checkbox = row.querySelector('.paid-checkbox');
+                
+                const interestForMonth = currentPrincipal * (rate / 100);
+                
+                document.getElementById(`opening-principal-${i}`).textContent = formatCurrency(currentPrincipal, currency);
+                document.getElementById(`interest-${i}`).textContent = formatCurrency(interestForMonth, currency);
+                
+                if (checkbox.checked) {
+                    row.classList.add('paid-row');
+                    totalInterestPaid += interestForMonth;
+                    document.getElementById(`closing-principal-${i}`).textContent = formatCurrency(currentPrincipal, currency);
+                } else {
+                    row.classList.remove('paid-row');
+                    totalUnpaidInterest += interestForMonth;
+                    currentPrincipal += interestForMonth;
+                    document.getElementById(`closing-principal-${i}`).textContent = formatCurrency(currentPrincipal, currency);
+                }
+            }
+
+            totalInterestPaidSpan.textContent = formatCurrency(totalInterestPaid, currency);
+            totalUnpaidInterestSpan.textContent = formatCurrency(totalUnpaidInterest, currency);
+            totalSimpleInterestSpan.textContent = formatCurrency(totalSimpleInterest, currency);
+            finalBalanceSpan.textContent = formatCurrency(currentPrincipal, currency);
+        }
+
+        function resetCalculator() {
+            principalInput.value = '';
+            rateInput.value = '';
+            monthsInput.value = '';
+            currencyInput.value = 'INR';
+            
+            principalInput.disabled = false;
+            rateInput.disabled = false;
+            monthsInput.disabled = false;
+            currencyInput.disabled = false;
+
+            generateBtn.style.display = 'inline-block';
+            generateBtn.textContent = 'Generate';
+            editBtn.style.display = 'none';
+
+            resultsSection.style.display = 'none';
+            scheduleContainer.innerHTML = '';
+            errorMessageDiv.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
