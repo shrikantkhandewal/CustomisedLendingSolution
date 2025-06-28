@@ -25,7 +25,7 @@
         }
 
         .container {
-            max-width: 1000px; /* Wider container for two-column layout */
+            max-width: 1000px;
             margin: 0 auto;
             background-color: var(--card-bg);
             padding: 25px;
@@ -76,7 +76,7 @@
             border-radius: 5px; margin-top: 15px; display: none;
         }
         
-        /* --- NEW: Two-Column Layout for Results --- */
+        /* --- Two-Column Layout for Results --- */
         .results-wrapper {
             display: flex;
             gap: 30px;
@@ -84,10 +84,10 @@
             margin-top: 30px;
         }
         .schedule-column {
-            flex: 3; /* Takes more space */
+            flex: 3;
             max-height: 70vh;
             overflow-y: auto;
-            padding-right: 10px; /* Space for scrollbar */
+            padding-right: 10px;
         }
         .schedule-column h2 {
             position: sticky;
@@ -98,7 +98,7 @@
             z-index: 10;
         }
         .summary-wrapper {
-            flex: 2; /* Takes less space */
+            flex: 2;
             position: sticky;
             top: 20px;
         }
@@ -126,8 +126,16 @@
 
         .details-content { padding: 0 20px 20px 20px; border-top: 1px solid var(--medium-gray); }
         .details-content p { margin: 8px 0; display: flex; justify-content: space-between; }
+        
         .manual-payment-group { margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--medium-gray); }
         .manual-payment-group label { font-size: 0.9em; }
+        .manual-payment-action { display: flex; gap: 10px; align-items: center; }
+        .manual-payment-action input { flex-grow: 1; }
+        .btn-apply {
+            background-color: var(--dark-gray); color: white; padding: 8px 12px;
+            font-size: 14px; height: auto; flex-shrink: 0;
+        }
+        .btn-apply:hover { background-color: #333; }
 
         /* --- Summary Section Styling --- */
         .summary-section { background-color: #f8f9fa; padding: 20px; border-radius: 8px; }
@@ -139,32 +147,21 @@
         #final-balance { color: var(--primary-color); }
         #total-simple-interest { color: var(--dark-gray); }
 
-        /* --- RESPONSIVE: Stack columns on smaller screens --- */
+        /* --- RESPONSIVE --- */
         @media (max-width: 950px) {
-            .results-wrapper {
-                flex-direction: column;
-            }
-            .schedule-column {
-                max-height: none;
-                overflow-y: visible;
-                width: 100%;
-                padding-right: 0;
-            }
-            .summary-wrapper {
-                position: static;
-                width: 100%;
-            }
+            .results-wrapper { flex-direction: column; }
+            .schedule-column { max-height: none; overflow-y: visible; width: 100%; padding-right: 0; }
+            .summary-wrapper { position: static; width: 100%; }
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Customised Lending Solution</h1>
+        <h1>Advanced Monthly Interest Calculator</h1>
 
         <section class="input-section">
             <div id="calculator-form" class="form-grid">
-                <!-- Input fields are unchanged -->
                 <div class="input-group">
                     <label for="principal">Principal Amount</label>
                     <input type="number" id="principal" placeholder="e.g., 500000">
@@ -196,7 +193,6 @@
             <div id="error-message"></div>
         </section>
 
-        <!-- NEW: Re-structured results area -->
         <div class="results-wrapper" id="results-wrapper" style="display: none;">
             <section class="schedule-column">
                 <h2>Payment Schedule</h2>
@@ -216,7 +212,6 @@
     </div>
 
     <script>
-        // --- JAVASCRIPT LOGIC REMAINS THE SAME ---
         const principalInput = document.getElementById('principal');
         const rateInput = document.getElementById('rate');
         const monthsInput = document.getElementById('months');
@@ -238,6 +233,13 @@
 
         function formatCurrency(num, currencyCode) {
             return new Intl.NumberFormat('en-IN', { style: 'currency', currency: currencyCode }).format(num);
+        }
+
+        // NEW: Function to handle instant updates when a manual input is cleared.
+        function handleManualInputChange(event) {
+            if (event.target.value === '') {
+                recalculateAndUpdateUI();
+            }
         }
 
         function enableEditing() {
@@ -268,10 +270,11 @@
             manualPaymentStates = {};
             recalculateAndUpdateUI();
 
-            resultsWrapper.style.display = 'flex'; // Use flex for the wrapper
+            resultsWrapper.style.display = 'flex';
         }
         
         function recalculateAndUpdateUI() {
+            // Capture current state of all dynamic inputs before re-rendering
             document.querySelectorAll('.paid-checkbox').forEach(cb => {
                 checkboxStates[cb.dataset.month] = cb.checked;
             });
@@ -315,7 +318,10 @@
                             <p><span>Calculated Interest:</span> <span>${formatCurrency(interestForMonth, currency)}</span></p>
                             <div class="manual-payment-group">
                                 <label for="manual-payment-${i}">Amount Received (Override):</label>
-                                <input type="number" id="manual-payment-${i}" class="manual-payment-input" data-month="${i}" oninput="recalculateAndUpdateUI()" value="${manualPaymentValue}" placeholder="Optional" step="any">
+                                <div class="manual-payment-action">
+                                    <input type="number" id="manual-payment-${i}" class="manual-payment-input" data-month="${i}" oninput="handleManualInputChange(event)" value="${manualPaymentValue}" placeholder="Optional" step="any">
+                                    <button class="btn-apply" onclick="recalculateAndUpdateUI()">Apply</button>
+                                </div>
                             </div>
                         </div>
                     </details>
